@@ -53,4 +53,3 @@ JSON backups include exercises, routines, workout history, any active draft, and
 - Rest timers recover from screen locking, but background alarms are not supported.
 - Existing RepCount data is not imported directly; restore accepts Setline JSON backups.
 - Mobile viewport behavior and offline reload were checked in a desktop browser; a physical iPhone is still needed to verify Safari installation and native share-sheet behavior.
-
