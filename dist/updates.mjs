@@ -21,7 +21,7 @@ export function createUpdates({onChange=()=>{},beforeApply=async()=>true,reload=
  const doReload=()=>{if(reloaded)return;reloaded=true;reload()};
  function inspect(){
   if(registration?.installing)installingWorker=registration.installing;
-  if(registration?.waiting&&isWaiting(registration.waiting))waiting=registration.waiting;
+  if(registration?.waiting&&isWaiting(registration.waiting)&&(serviceWorker.controller||registration.active&&registration.active!==registration.waiting))waiting=registration.waiting;
   if(waiting&&!isWaiting(waiting))waiting=null;
   for(const worker of [registration?.installing,registration?.waiting,registration?.active]){
    if(!worker||watched.has(worker))continue;
@@ -49,6 +49,9 @@ export function createUpdates({onChange=()=>{},beforeApply=async()=>true,reload=
  }
  function observe(result){
   if(registration!==result){registration=result;registration.addEventListener('updatefound',inspect)}
+  // A newly opened page may not yet be controlled, even though an older worker
+  // already serves this installation. Its replacement still needs a refresh.
+  if(!previousController&&registration.active)previousController=registration.active;
   inspect();
  }
  function waitForInstall(){

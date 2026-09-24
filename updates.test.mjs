@@ -42,6 +42,8 @@ test('first installation never prompts or reloads the newly controlled page',asy
  const h=harness({controller:null});await h.manager.check();const worker=new Worker('installing');
  h.registration.installing=worker;h.registration.dispatchEvent(new Event('updatefound'));
  assert.equal(h.manager.getState().status,'checking');assert.equal(h.manager.getState().ready,false);
+ h.registration.waiting=worker;h.registration.installing=null;worker.change('installed');
+ assert.equal(h.manager.getState().ready,false);assert.equal(h.reloads,0);
  h.activate(worker);assert.equal(h.manager.getState().ready,false);assert.equal(h.manager.getState().busy,false);assert.equal(h.reloads,0);
 });
 
@@ -67,6 +69,12 @@ test('an initially uncontrolled page can explicitly activate a waiting replaceme
  const waiting=new Worker('installed'),h=harness({controller:null,waiting});h.registration.active=new Worker();
  waiting.onPost=()=>h.activate(waiting);assert.equal(await h.manager.check(),'ready');
  assert.equal(await h.manager.apply(),true);assert.equal(h.reloads,1);assert.equal(h.manager.getState().busy,false);
+});
+
+test('an initially uncontrolled page notices another tab replacing its existing worker',async()=>{
+ const waiting=new Worker('installed'),h=harness({controller:null,waiting});h.registration.active=new Worker();await h.manager.check();
+ h.activate(waiting);assert.equal(h.reloads,0);assert.equal(h.manager.getState().ready,true);
+ assert.equal(await h.manager.apply(),true);assert.equal(h.reloads,1);
 });
 
 test('a failed activation is bounded and the same update can be retried',async()=>{

@@ -1,16 +1,28 @@
 # Verification
 
-Checked on 24 September 2026, including the version 2.1 sharing and offline update.
+Checked on 24 September 2026, including the version 2.2 in-app update flow.
 
 ## Automated checks
 
-`node --test`: all 43 tests passed.
+`node --test`: all 63 tests passed.
 
 Coverage includes full JSON round trips; surviving drop sets when their parent is unchecked; warmup/drop-set volume and PR rules; canonical kg preservation across unit changes; invalid backup rejection; bodyweight sets; superset cleanup; duration-based calendar shades; historical training schedules; CSV escaping; and recalculation after deleting a workout.
 
 Additional coverage: version 1 migration with active draft preservation, setup and appearance round trips, unsupported schema/preference rejection, rating range validation and CSV export, routine editing isolation, duplicate exercise IDs, canonical template weights, empty routine rejection, superset/drop templates, and legacy schedule baselines.
 
 Version 2.1 adds decimal-dot/comma parsing, fractional kg/lb round trips, elapsed-time hour boundaries and resumed sessions; routine bundle privacy, validation, ID collisions, additive imports and size/count limits; and offline cache completeness, failed-install retention, cache isolation, navigation fallback, missing-script errors, readiness timeouts and waiting-worker handling.
+
+Version 2.2 covers reload-mode precaching; explicit activation only after cache completeness; deterministic versioning including worker changes; awaiting a successful save before activation; first-install handling; another-tab activation; downloaded updates while offline; install/check/activation deadlines and retries; and throttled foreground/reconnect checks.
+
+## Version 2.2 browser checks
+
+- Served two release versions on a separate localhost origin with production security headers at a 390 × 844 viewport.
+- Confirmed the first install showed up-to-date status without an update prompt. Deployed the second version while the first stayed open, then used Check for updates to display Update ready.
+- Logged and checked 22,75 kg × 8. An invalid second weight blocked Update now. Removing that invalid row cleared the blocker.
+- Renamed an unsaved routine; Update now left it open and asked to save. Saved the routine, applied the update, and confirmed the release marker changed.
+- After the update reload, the active workout still contained 22.75 kg × 8, checked, with 182 kg volume and the continuing elapsed timer. The update banner disappeared and Settings reported up to date.
+- Stopped the local server and confirmed no listener remained. Check for updates reported a recoverable failure. Reloaded from cache and continued the same workout with its saved set and timer intact.
+- No application console errors during the successful upgrade. Physical iOS Home Screen lifecycle testing remains outstanding.
 
 ## Version 2.1 browser checks
 
