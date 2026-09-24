@@ -5,10 +5,14 @@ A phone-first, offline-capable workout tracker. No account, subscriptions, or ho
 ## Features
 
 - Exercises, reps, weights, warmups, drop sets, and linked supersets.
-- Starter routines, custom exercises, and saving a session as a repeatable routine.
+- First-run setup for kg/lb, rest time, training days, and appearance; existing users retain their data and settings.
+- Light/dark appearance, four accent colors, and bundled Space Grotesk/Manrope fonts that work offline.
+- A dedicated routine editor: create, rename, reorder, set targets, and link supersets without starting a workout. Edits do not alter active or completed workouts.
+- Exercise browsing grouped by muscle, custom exercises, and muscle filters for routines and workout history.
+- Optional 1–5 workout ratings at completion, editable later in history and included in backups and CSV.
 - Autosaved active session, rest countdown, notes, workout history, and quick exercise history.
 - Personal records, estimated 1RM, volume and session statistics, and exercise charts.
-- GitHub-style activity calendar: total minutes per day determine the green shade. Under 30, 30–59, 60–89, and 90+ minutes progress from light to dark. Multiple sessions add together.
+- GitHub-style activity calendar: total minutes per day determine the shade in your accent color. Under 30, 30–59, 60–89, and 90+ minutes progress from light to dark. Multiple sessions add together.
 - A dated weekly training schedule distinguishes missed sessions from rest days and preserves past plans.
 - JSON backup/restore and spreadsheet-friendly CSV export.
 - Installable on an iPhone Home Screen with offline assets and device-local IndexedDB storage.
@@ -45,6 +49,10 @@ Canonical weights are kilograms; kg/lb toggles only change the display. Records 
 Calendar dates use the device's local time zone and assign each session to its start day. Duration uses elapsed start-to-finish time, including rests. Today is never marked missed. Schedule changes apply from their saved date, preserving earlier schedules.
 
 JSON backups include exercises, routines, workout history, any active draft, and settings. Restore validates the entire file before replacing data and asks for confirmation. CSV exports completed sets for analysis; it is not a full backup format.
+
+Schema version 2 includes appearance preferences, setup status, and nullable workout ratings. Version 1 backups migrate automatically; historical workouts remain unrated. Unknown future versions are rejected. Old app versions cannot load version 2 data, preventing them from silently removing new fields. Routine edits remain separate until Save routine; leaving an edited routine asks before discarding changes.
+
+The two Latin variable fonts are self-hosted under the SIL Open Font License; license texts and source URLs are included in `dist/fonts/`.
 
 ## Limitations
 
