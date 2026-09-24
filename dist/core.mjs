@@ -7,6 +7,21 @@ export const localDay=(v=new Date())=>{const d=new Date(v);return `${d.getFullYe
 export function activityDays(state,count=112,now=new Date()){const dates=new Map();for(const w of state.workouts){const k=localDay(w.started),v=dates.get(k)||{count:0,minutes:0};v.count++;v.minutes+=Math.max(0,(Date.parse(w.ended)-Date.parse(w.started))/60000);dates.set(k,v)}const today=localDay(now);return Array.from({length:count},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-(count-7)-now.getDay()+i,12);const key=localDay(d),v=dates.get(key)||{count:0,minutes:0},plans=state.settings.scheduleHistory||[],plan=plans.filter(p=>p.from<=key).at(-1),scheduled=plan?plan.days:(plans.length?[]:state.settings.schedule||[]);return {date:key,count:v.count,minutes:Math.round(v.minutes),level:v.minutes<30?1:v.minutes<60?2:v.minutes<90?3:4,status:key>today?'future':v.count?'trained':key<today&&key>=(state.settings.trackingSince||today)&&scheduled.includes(d.getDay())?'missed':key===today&&scheduled.includes(d.getDay())?'planned':'rest'}})};
 export const toDisplay=(kg,unit)=>kg==null?'':Math.round(kg*(unit==='lb'?2.20462262185:1)*100)/100;
 export const toKg=(value,unit)=>Number(value)/(unit==='lb'?2.20462262185:1);
+// A single comma or dot is a decimal separator. Grouped thousands are not accepted.
+export function parseWeightInput(raw){
+ if(raw==null)return null;
+ if(typeof raw==='number')return Number.isFinite(raw)&&raw>=0?raw:NaN;
+ if(typeof raw!=='string')return NaN;
+ const value=raw.trim();if(!value)return null;
+ if(!/^(?:\d+(?:[.,]\d*)?|[.,]\d+)$/.test(value))return NaN;
+ const weight=Number(value.replace(',','.'));return Number.isFinite(weight)?weight:NaN;
+}
+export function formatElapsed(started,now=Date.now()){
+ const timestamp=value=>typeof value==='number'?value:value instanceof Date?value.getTime():typeof value==='string'?Date.parse(value):NaN;
+ const elapsed=timestamp(now)-timestamp(started),seconds=Number.isFinite(elapsed)?Math.max(0,Math.floor(elapsed/1000)):0;
+ const hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60),remainder=String(seconds%60).padStart(2,'0');
+ return hours?`${hours}:${String(minutes).padStart(2,'0')}:${remainder}`:`${minutes}:${remainder}`;
+}
 export const validSet=s=>Number.isFinite(s.weight)&&s.weight>=0&&s.weight<=10000&&Number.isInteger(s.reps)&&s.reps>0&&s.reps<=1000;
 export const workingSets=w=>w.entries.flatMap(e=>e.sets.filter(s=>s.done&&s.type!=='warmup'&&validSet(s)));
 export const volume=w=>workingSets(w).reduce((n,s)=>n+s.weight*s.reps,0);

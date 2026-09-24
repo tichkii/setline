@@ -74,4 +74,18 @@ fieldset{min-width:0}
 .rating-badge{display:block;color:var(--accent);font-size:.75rem;margin-top:10px;font-weight:600}
 .in-session-routines{border-block:1px solid var(--line);margin-top:28px;padding:16px 0}.in-session-routines summary{cursor:pointer;padding:10px 0;font-size:.85rem;color:var(--muted)}
 .routine-edit-row{width:100%;text-align:left;display:flex;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--line);font-size:.875rem}.routine-edit-row span{color:var(--accent)}
+.routine-sharing-actions,.share-actions{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+.routine-sharing-actions button,.share-actions button{flex:1;min-width:135px;font-size:.875rem}
+.routine-card>.text-link{display:block;margin:8px 0 12px}
+.share-preview{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#111413;color:var(--muted);text-align:center;min-height:100px;display:grid;place-items:center}
+.share-preview img{display:block;width:100%;height:auto}
+.share-text-details{margin-top:22px}.share-text-details summary{cursor:pointer;min-height:44px;padding:12px 0;font-size:.875rem;color:var(--muted)}
+.share-text-details textarea{font-size:.875rem;line-height:1.6;margin-top:8px}
+.share-routine-list{list-style:none;padding:0;margin:16px 0;max-height:240px;overflow:auto}
+.share-routine-list li{padding:12px 0;border-bottom:1px solid var(--line);font-weight:600;overflow-wrap:anywhere}
+.share-routine-list span{display:block;font-weight:400;color:var(--muted);font-size:.875rem;margin-top:5px}
+.file-picker input{width:100%;font-size:.875rem}
+.connection-notice{padding:12px 20px;background:var(--raised);color:var(--ink);border-bottom:1px solid var(--line);font-size:.875rem;line-height:1.5;text-align:center}
+#elapsed{font-variant-numeric:tabular-nums;font-size:1rem;letter-spacing:.03em}
+.set-row input:invalid{border-color:var(--danger)}
 @media(max-width:520px){.routine-cards{grid-template-columns:1fr}.font-card{padding:13px}.font-card.selected{padding:12px}.palette{gap:8px}.rating-options{gap:5px}.template-grid{grid-template-columns:44px minmax(50px,1fr) minmax(50px,1fr) 24px}.editor-toolbar{margin-top:-24px;padding-top:12px}.setup-basics{gap:10px}.setup-basics select{padding:12px 8px;font-size:.8rem}.routine-card{padding:16px}}
