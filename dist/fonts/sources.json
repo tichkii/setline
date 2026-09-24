@@ -1,0 +1,28 @@
+[
+  {
+    "family": "Manrope",
+    "filename": "manrope-latin-variable.woff2",
+    "font_url": "https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggexSg.woff2",
+    "weights": "200 800",
+    "style": "normal",
+    "subset": "latin",
+    "license": "SIL Open Font License 1.1",
+    "license_filename": "manrope-OFL.txt",
+    "license_url": "https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/OFL.txt",
+    "bytes": 24836,
+    "sha256": "a30ddcd349703aff7464c34bef3fffdff405ee50c113440d7c8693c02d210972"
+  },
+  {
+    "family": "Space Grotesk",
+    "filename": "space-grotesk-latin-variable.woff2",
+    "font_url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2",
+    "weights": "300 700",
+    "style": "normal",
+    "subset": "latin",
+    "license": "SIL Open Font License 1.1",
+    "license_filename": "space-grotesk-OFL.txt",
+    "license_url": "https://raw.githubusercontent.com/google/fonts/main/ofl/spacegrotesk/OFL.txt",
+    "bytes": 22288,
+    "sha256": "0640890476fc1198ab4de571fb658de443c4d85b66466ec09534a8737ab1ce9d"
+  }
+]
