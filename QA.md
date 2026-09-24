@@ -1,14 +1,29 @@
 # Verification
 
-Checked on 24 September 2026, including the version 2 feature update.
+Checked on 24 September 2026, including the version 2.1 sharing and offline update.
 
 ## Automated checks
 
-`node --test core.test.mjs`: all 21 tests passed.
+`node --test`: all 43 tests passed.
 
 Coverage includes full JSON round trips; surviving drop sets when their parent is unchecked; warmup/drop-set volume and PR rules; canonical kg preservation across unit changes; invalid backup rejection; bodyweight sets; superset cleanup; duration-based calendar shades; historical training schedules; CSV escaping; and recalculation after deleting a workout.
 
 Additional coverage: version 1 migration with active draft preservation, setup and appearance round trips, unsupported schema/preference rejection, rating range validation and CSV export, routine editing isolation, duplicate exercise IDs, canonical template weights, empty routine rejection, superset/drop templates, and legacy schedule baselines.
+
+Version 2.1 adds decimal-dot/comma parsing, fractional kg/lb round trips, elapsed-time hour boundaries and resumed sessions; routine bundle privacy, validation, ID collisions, additive imports and size/count limits; and offline cache completeness, failed-install retention, cache isolation, navigation fallback, missing-script errors, readiness timeouts and waiting-worker handling.
+
+## Version 2.1 browser checks
+
+- Used a separate localhost origin with the production Content-Security-Policy headers and a 390 × 844 viewport.
+- Completed 22,75 kg × 8 and 17.25 kg × 10, rated 4/5 and saved. Summary showed 354.5 kg; share text and image preserved both fractional weights.
+- Generated an 83 KB workout PNG and a 75 KB stats PNG from the on-device canvas. Inspected both previews; no external image or font requests are required. Share text excludes private notes.
+- Shared one routine and all four local test routines. The single package contained one routine and only its referenced exercises, without workout history.
+- Rejected an invalid routine format, previewed a valid copied import code, and added it alongside existing routines while retaining workout history.
+- Saved a 62,5 kg target in the routine editor. Logged 27,25 lb × 5 in an active session; display showed 27.25 lb and 136.25 lb volume. Invalid 27..25 input reset both completion state and the live totals to zero until corrected.
+- Live elapsed time advanced in seconds and survived a reload; completed summaries continue to use minutes.
+- Confirmed offline readiness, stopped the local server, verified its port was unavailable, and reloaded. The active workout, 27.25 lb weight, checked set, elapsed timer and bundled fonts remained available.
+- With the server still stopped, generated a stats card and imported a routine without changing the active workout.
+- No application console errors. Native iPhone share-sheet and final Files/Photos saving still need physical-device verification; the in-app browser did not expose a download event for the Save image action. Preview/long-press and text/code fallbacks remain available.
 
 ## Version 2 browser checks
 

@@ -2,7 +2,7 @@
 (() => {
   const showRecovery = () => {
     const app = document.getElementById('app');
-    if (!app || app.dataset.ready === 'true') return;
+    if (!app || app.dataset.ready === 'true' || !document.getElementById('boot-status')) return;
     document.getElementById('boot-status').textContent = 'Setline could not finish loading. Reconnect and try again. If you have opened this app before, close and reopen it to use the saved offline version. Your saved workout data has not been cleared.';
     document.getElementById('boot-retry').hidden = false;
   };

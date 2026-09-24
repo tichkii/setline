@@ -10,7 +10,11 @@ A phone-first, offline-capable workout tracker. No account, subscriptions, or ho
 - A dedicated routine editor: create, rename, reorder, set targets, and link supersets without starting a workout. Edits do not alter active or completed workouts.
 - Exercise browsing grouped by muscle, custom exercises, and muscle filters for routines and workout history.
 - Optional 1–5 workout ratings at completion, editable later in history and included in backups and CSV.
-- Autosaved active session, rest countdown, notes, workout history, and quick exercise history.
+- Autosaved active session, live m:ss / h:mm:ss elapsed time, rest countdown, notes, workout history, and quick exercise history.
+- Decimal weights accept a dot or comma, including quarter-weight plates.
+- Share workouts and selected-period statistics as lightweight PNG cards generated on the device, with share-text/copy/save fallbacks.
+- Share one or all routines as portable files, or copy/paste routine import codes. Imports add routines without replacing existing history, settings, or an active workout.
+- Verified offline readiness, cached fonts and sharing tools, and a loading recovery screen for interrupted connections.
 - Personal records, estimated 1RM, volume and session statistics, and exercise charts.
 - GitHub-style activity calendar: total minutes per day determine the shade in your accent color. Under 30, 30–59, 60–89, and 90+ minutes progress from light to dark. Multiple sessions add together.
 - A dated weekly training schedule distinguishes missed sessions from rest days and preserves past plans.
@@ -30,7 +34,7 @@ Open the printed localhost URL. This is a static app: deploy the contents of `di
 ## Verify and release
 
 ```sh
-node --test core.test.mjs
+node --test
 node release.mjs
 ```
 
@@ -44,7 +48,7 @@ The `setline` Pages project uses `tichkii/setline` with these settings:
 
 - Production branch: `main`, with automatic deployments enabled.
 - Framework preset: None.
-- Build command: `node --test core.test.mjs && node release.mjs`.
+- Build command: `node --test && node release.mjs`.
 - Build output directory: `dist`.
 - Root directory: repository root (leave blank).
 
@@ -55,6 +59,14 @@ When moving from a different hosting address, export a full JSON backup in the o
 ## iPhone installation
 
 Open the hosted link in Safari, choose Share → Add to Home Screen, keep Open as Web App enabled if offered, then Add. Open the installed app online once so its files can cache before going offline. Install before logging; Safari and installed-app data can be separate. JSON backup/restore moves your history between them.
+
+## Sharing and offline use
+
+Use Share workout in a saved session, Share stats in Progress, or Share routine / Share all routines on the workout screen. PNG cards are rendered locally with Canvas and bundled fonts, without a server, screenshot library, or network request. Notes are excluded from shared summaries. Native file sharing is feature-detected; Save image, text sharing, copying, and a selectable text fallback remain available. iPhone native share-sheet behavior still needs physical-device verification.
+
+Routine sharing exports only selected routine templates and their exercises. Import accepts the JSON download, the plain-text shared file, or pasted code. It previews names before adding, validates a 5 MB versioned package, keeps kg canonical, and generates fresh IDs. Duplicate imports intentionally add another copy rather than replace existing routines. This is separate from full-backup restore.
+
+In Settings, Prepare offline access verifies that the complete app is cached. Connect once to prepare it before leaving coverage. Workouts, history, timers, image generation, and routine import then work locally. Save images/files to send later when a sharing destination needs connectivity. The first-ever visit still requires a connection; clearing browser storage removes the offline cache and local log.
 
 ## Data and calculation rules
 

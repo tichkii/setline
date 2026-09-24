@@ -1,4 +1,4 @@
-const CACHE='setline-85b042b118ed';
+const CACHE='setline-6c792df3983c';
 const ASSETS=['./','./index.html','./styles.css','./base.css','./boot.js','./app.js','./core.mjs','./views.mjs','./sharing.mjs','./routine-sharing.mjs','./share-card.mjs','./offline.mjs','./favicon.svg','./manifest.webmanifest','./icon-192.png','./icon-512.png','./preferences.mjs','./routines.mjs','./fonts/space-grotesk-latin-variable.woff2','./fonts/manrope-latin-variable.woff2'];
 const isCode=path=>/\.(?:m?js|css)$/.test(new URL(path,self.location.href).pathname);
 const usable=(response,path)=>Boolean(response&&response.ok&&(!isCode(path)||!response.headers.get('content-type')?.includes('text/html')));
