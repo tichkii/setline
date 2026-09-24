@@ -89,3 +89,6 @@ fieldset{min-width:0}
 #elapsed{font-variant-numeric:tabular-nums;font-size:1rem;letter-spacing:.03em}
 .set-row input:invalid{border-color:var(--danger)}
 @media(max-width:520px){.routine-cards{grid-template-columns:1fr}.font-card{padding:13px}.font-card.selected{padding:12px}.palette{gap:8px}.rating-options{gap:5px}.template-grid{grid-template-columns:44px minmax(50px,1fr) minmax(50px,1fr) 24px}.editor-toolbar{margin-top:-24px;padding-top:12px}.setup-basics{gap:10px}.setup-basics select{padding:12px 8px;font-size:.8rem}.routine-card{padding:16px}}
+
+.update-notice{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line);background:var(--raised);color:var(--ink)}
+.update-notice[hidden]{display:none}.update-notice strong{font-size:.875rem;color:var(--accent)}.update-notice p{font-size:.8rem;line-height:1.5;color:var(--muted);margin:4px 0 0}.update-notice button{flex:none;font-size:.8rem;padding:12px 16px;min-height:44px}

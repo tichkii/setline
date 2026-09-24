@@ -2,27 +2,61 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import os from 'node:os';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
 import {prepareOffline} from './dist/offline.mjs';
 
 const source=fs.readFileSync(new URL('./dist/sw.js',import.meta.url),'utf8');
 const cacheName=source.match(/const CACHE='([^']+)'/)[1];
 function workerHarness({hostname='setline.example',installFails=false,networkFails=true,htmlScript=false,cacheFails=false}={}){
- const origin=`https://${hostname}`,handlers={},stores=new Map(),deleted=[];let claimed=0,skipped=0;
+ const origin=`https://${hostname}`,handlers={},stores=new Map(),deleted=[],installRequests=[];let claimed=0,skipped=0;
  const key=value=>new URL(typeof value==='string'?value:value.url,origin+'/sw.js').href;
- const response=(path,body='cached')=>new Response(body,{headers:{'content-type':/\.m?js$/.test(path)?'application/javascript':/\.css$/.test(path)?'text/css':'text/html'}});
+ const response=(path,body='cached')=>new Response(body,{headers:{'content-type':/\.m?js$/.test(key(path))?'application/javascript':/\.css$/.test(key(path))?'text/css':'text/html'}});
  const caches={open:async name=>{
   if(cacheFails)throw Error('Storage unavailable');
   if(!stores.has(name))stores.set(name,new Map());const data=stores.get(name);
-  return {addAll:async assets=>{if(installFails)throw Error('Offline');for(const asset of assets)data.set(key(asset),response(asset))},match:async request=>data.get(key(request))};
+  return {addAll:async assets=>{installRequests.push(...assets);if(installFails)throw Error('Offline');for(const asset of assets)data.set(key(asset),response(asset))},match:async request=>data.get(key(request))};
  },keys:async()=>[...stores.keys()],delete:async name=>{deleted.push(name);return stores.delete(name)}};
  const self={location:new URL(origin+'/sw.js'),addEventListener:(type,handler)=>handlers[type]=handler,skipWaiting:async()=>{skipped++},clients:{claim:async()=>{claimed++}}};
- vm.runInNewContext(source,{self,caches,URL,Response,fetch:async request=>{if(networkFails)throw Error('Offline');return response(htmlScript?'index.html':request.url,'network')}});
- return {stores,deleted,key,get claimed(){return claimed},get skipped(){return skipped},async lifecycle(type){let promise;handlers[type]({waitUntil:p=>promise=p});await promise},async request(path,options={}){let promise;handlers.fetch({request:{url:key(path),method:'GET',mode:'cors',...options},respondWith:p=>promise=p});return promise?await promise:null},async status(){let promise,reply;handlers.message({data:{type:'SETLINE_OFFLINE_STATUS'},ports:[{postMessage:data=>reply=data}],waitUntil:p=>promise=p});await promise;return reply}};
+ vm.runInNewContext(source,{self,caches,URL,Request,Response,fetch:async request=>{if(networkFails)throw Error('Offline');return response(htmlScript?'index.html':request.url,'network')}});
+ const message=async(type,{port=true}={})=>{let promise,reply;handlers.message({data:{type},ports:port?[{postMessage:data=>reply=data}]:[],waitUntil:p=>promise=p});await promise;return reply};
+ return {stores,deleted,installRequests,key,message,get claimed(){return claimed},get skipped(){return skipped},async lifecycle(type){let promise;handlers[type]({waitUntil:p=>promise=p});await promise},async request(path,options={}){let promise;handlers.fetch({request:{url:key(path),method:'GET',mode:'cors',...options},respondWith:p=>promise=p});return promise?await promise:null},status:()=>message('SETLINE_OFFLINE_STATUS')};
 }
 test('worker caches every required asset and reports readiness only for its complete cache',async()=>{
  const h=workerHarness();await h.lifecycle('install');assert.equal(h.skipped,0);assert.equal((await h.status()).ready,true);assert.equal((await h.status()).cache,cacheName);
- for(const asset of ['boot.js','sharing.mjs','routine-sharing.mjs','share-card.mjs','offline.mjs'])assert.ok(h.stores.get(cacheName).has(h.key(asset)),asset);
+ for(const asset of ['boot.js','sharing.mjs','routine-sharing.mjs','share-card.mjs','offline.mjs','updates.mjs'])assert.ok(h.stores.get(cacheName).has(h.key(asset)),asset);
  h.stores.get(cacheName).delete(h.key('share-card.mjs'));assert.equal((await h.status()).ready,false);
+});
+test('installation bypasses stale HTTP cache for every asset without forcing activation, including on localhost',async()=>{
+ const h=workerHarness({hostname:'localhost'});await h.lifecycle('install');assert.equal(h.skipped,0);assert.ok(h.installRequests.length>0);for(const request of h.installRequests){assert.ok(request instanceof Request);assert.equal(request.cache,'reload')}
+});
+test('explicit update activation waits for a complete cache and acknowledges the request',async()=>{
+ const h=workerHarness();const incomplete=await h.message('SETLINE_ACTIVATE_UPDATE');assert.equal(incomplete.ready,false);assert.equal(h.skipped,0);
+ await h.lifecycle('install');const complete=await h.message('SETLINE_ACTIVATE_UPDATE');assert.equal(complete.type,'SETLINE_ACTIVATE_UPDATE');assert.equal(complete.ready,true);assert.equal(complete.cache,cacheName);assert.equal(h.skipped,1);
+});
+test('update activation refuses a damaged or unavailable cache and ignores unrelated messages',async()=>{
+ const h=workerHarness();await h.lifecycle('install');h.stores.get(cacheName).delete(h.key('app.js'));assert.equal((await h.message('SETLINE_ACTIVATE_UPDATE')).ready,false);assert.equal(await h.message('UNRELATED'),undefined);assert.equal(h.skipped,0);
+ const unavailable=workerHarness({cacheFails:true});assert.equal((await unavailable.message('SETLINE_ACTIVATE_UPDATE')).ready,false);assert.equal(unavailable.skipped,0);
+});
+test('explicit update message also works without a reply port',async()=>{
+ const h=workerHarness();await h.lifecycle('install');assert.equal(await h.message('SETLINE_ACTIVATE_UPDATE',{port:false}),undefined);assert.equal(h.skipped,1);
+});
+test('release versions are deterministic and change for worker-only or asset changes',()=>{
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'setline-release-test-'));
+ try{
+  const assets=JSON.parse(source.match(/const ASSETS=(\[[^;]+\]);/)[1].replaceAll("'",'"'));
+  for(const asset of assets.filter(name=>name!=='./')){const target=path.join(directory,'dist',asset);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,'test asset '+asset)}
+  const worker=path.join(directory,'dist','sw.js'),script=path.join(directory,'release.mjs');fs.writeFileSync(worker,source);fs.copyFileSync(new URL('./release.mjs',import.meta.url),script);
+  const release=()=>{execFileSync(process.execPath,[script],{stdio:'pipe'});return fs.readFileSync(worker,'utf8').match(/const CACHE='([^']+)'/)[1]};
+  const first=release();assert.equal(release(),first);
+  fs.appendFileSync(worker,'\n// A worker-only release change.\n');const second=release();assert.notEqual(second,first);assert.equal(release(),second);
+  fs.appendFileSync(path.join(directory,'dist','app.js'),'\nchanged asset');const third=release();assert.notEqual(third,second);assert.equal(release(),third);
+ }finally{
+  const resolved=path.resolve(directory),temporary=path.resolve(os.tmpdir());
+  if(path.dirname(resolved)!==temporary||!path.basename(resolved).startsWith('setline-release-test-'))throw Error('Unexpected release test directory');
+  fs.rmSync(resolved,{recursive:true,force:true});
+ }
 });
 test('failed worker installation preserves the old offline app and unrelated caches',async()=>{
  const h=workerHarness({installFails:true});h.stores.set('setline-previous',new Map());h.stores.set('another-app',new Map());await assert.rejects(h.lifecycle('install'));assert.ok(h.stores.has('setline-previous'));assert.equal(h.claimed,0);assert.deepEqual(h.deleted,[]);

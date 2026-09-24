@@ -1,12 +1,12 @@
-const CACHE='setline-6c792df3983c';
-const ASSETS=['./','./index.html','./styles.css','./base.css','./boot.js','./app.js','./core.mjs','./views.mjs','./sharing.mjs','./routine-sharing.mjs','./share-card.mjs','./offline.mjs','./favicon.svg','./manifest.webmanifest','./icon-192.png','./icon-512.png','./preferences.mjs','./routines.mjs','./fonts/space-grotesk-latin-variable.woff2','./fonts/manrope-latin-variable.woff2'];
+const CACHE='setline-874a314307a5';
+const ASSETS=['./','./index.html','./styles.css','./base.css','./boot.js','./app.js','./core.mjs','./views.mjs','./sharing.mjs','./routine-sharing.mjs','./share-card.mjs','./offline.mjs','./updates.mjs','./favicon.svg','./manifest.webmanifest','./icon-192.png','./icon-512.png','./preferences.mjs','./routines.mjs','./fonts/space-grotesk-latin-variable.woff2','./fonts/manrope-latin-variable.woff2'];
 const isCode=path=>/\.(?:m?js|css)$/.test(new URL(path,self.location.href).pathname);
 const usable=(response,path)=>Boolean(response&&response.ok&&(!isCode(path)||!response.headers.get('content-type')?.includes('text/html')));
 async function cacheComplete(){const cache=await caches.open(CACHE);const results=await Promise.all(ASSETS.map(async path=>usable(await cache.match(path),path)));return results.every(Boolean)}
 self.addEventListener('install',event=>event.waitUntil((async()=>{
- const cache=await caches.open(CACHE);await cache.addAll(ASSETS);
+ // Fetch a coherent new release instead of reusing the browser's HTTP cache.
+ const cache=await caches.open(CACHE);await cache.addAll(ASSETS.map(path=>new Request(new URL(path,self.location.href),{cache:'reload'})));
  if(!await cacheComplete())throw Error('The complete Setline app could not be saved for offline use.');
- if(self.location.hostname==='127.0.0.1'||self.location.hostname==='localhost')await self.skipWaiting();
 })()));
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
  // A failed installation leaves the previous worker and its cache available.
@@ -15,8 +15,18 @@ self.addEventListener('activate',event=>event.waitUntil((async()=>{
  await self.clients.claim();
 })()));
 self.addEventListener('message',event=>{
- if(event.data?.type!=='SETLINE_OFFLINE_STATUS'||!event.ports?.[0])return;
- event.waitUntil(cacheComplete().then(ready=>event.ports[0].postMessage({type:'SETLINE_OFFLINE_STATUS',cache:CACHE,ready})).catch(()=>event.ports[0].postMessage({type:'SETLINE_OFFLINE_STATUS',cache:CACHE,ready:false})));
+ const type=event.data?.type;
+ if(type!=='SETLINE_OFFLINE_STATUS'&&type!=='SETLINE_ACTIVATE_UPDATE')return;
+ if(type==='SETLINE_OFFLINE_STATUS'&&!event.ports?.[0])return;
+ const reply=ready=>event.ports?.[0]?.postMessage({type,cache:CACHE,ready});
+ event.waitUntil((async()=>{
+  try{
+   const ready=await cacheComplete();
+   // The app sends this only after the user saves and accepts the update.
+   if(type==='SETLINE_ACTIVATE_UPDATE'&&ready)await self.skipWaiting();
+   reply(ready);
+  }catch{reply(false)}
+ })());
 });
 self.addEventListener('fetch',event=>{
  if(event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;

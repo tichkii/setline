@@ -38,7 +38,11 @@ node --test
 node release.mjs
 ```
 
-Run `release.mjs` after every asset change. It derives the service-worker cache name from the asset contents. New production versions activate after the previous app windows are closed, preserving active sessions. Localhost updates activate immediately for development.
+Run `release.mjs` after every asset change. It derives the service-worker cache name from the assets and worker logic. Each update downloads a complete new cache before it can activate; HTTP cache revalidation and reload-mode precaching prevent stale assets from carrying into a release. The same update lifecycle runs locally and in production.
+
+Setline checks for updates when opened, brought to the foreground, or reconnected, with automatic checks throttled to once per minute. Settings also has Check for updates. When a version is ready, Update now saves the current workout before activating it and reloading. Unsaved routine edits, invalid set input, or failed local saves block that action. Other open tabs get an update notice without a forced reload. Offline logging continues with the previously cached version when a new download fails.
+
+Existing users upgrading from version 2.1 or earlier must open online, then fully close all Setline windows and reopen once to receive the new update controls. Future versions can use the update button. Do not delete the Home Screen app or clear website data to update. The app cannot check for updates while iOS has suspended or closed it.
 
 ## Cloudflare Pages
 
