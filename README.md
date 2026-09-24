@@ -36,6 +36,22 @@ node release.mjs
 
 Run `release.mjs` after every asset change. It derives the service-worker cache name from the asset contents. New production versions activate after the previous app windows are closed, preserving active sessions. Localhost updates activate immediately for development.
 
+## Cloudflare Pages
+
+Production address: https://setline-ep2.pages.dev/
+
+The `setline` Pages project uses `tichkii/setline` with these settings:
+
+- Production branch: `main`, with automatic deployments enabled.
+- Framework preset: None.
+- Build command: `node --test core.test.mjs && node release.mjs`.
+- Build output directory: `dist`.
+- Root directory: repository root (leave blank).
+
+Keep the Cloudflare GitHub app authorized for this repository so pushes can trigger builds. The build runs the core tests and versions the offline cache before publishing the app. No database, environment secrets, or paid services are required.
+
+When moving from a different hosting address, export a full JSON backup in the old app and restore it at the new address. Local workout data does not move automatically between website addresses. Install the new address on your iPhone Home Screen, then restore there if the installed app has separate storage. Keep the backup until you have checked your history.
+
 ## iPhone installation
 
 Open the hosted link in Safari, choose Share → Add to Home Screen, keep Open as Web App enabled if offered, then Add. Open the installed app online once so its files can cache before going offline. Install before logging; Safari and installed-app data can be separate. JSON backup/restore moves your history between them.
