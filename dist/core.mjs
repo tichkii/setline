@@ -1,6 +1,22 @@
 export const uid=()=>crypto.randomUUID();
 const library={Chest:['Bench press','Incline dumbbell press','Dumbbell press','Chest fly','Cable fly','Push-up','Chest dip'],Back:['Barbell row','Lat pulldown','Seated cable row','Pull-up','Chin-up','Dumbbell row','Deadlift'],Legs:['Back squat','Front squat','Leg press','Romanian deadlift','Leg curl','Leg extension','Bulgarian split squat','Walking lunge','Hip thrust','Calf raise'],Shoulders:['Shoulder press','Dumbbell shoulder press','Lateral raise','Rear delt fly','Face pull'],Arms:['Barbell curl','Dumbbell curl','Hammer curl','Cable curl','Triceps pushdown','Overhead triceps extension','Skull crusher'],Core:['Crunch','Cable crunch','Hanging leg raise','Ab wheel rollout']};
 export const exercises=Object.entries(library).flatMap(([muscle,names])=>names.map(name=>({id:name.toLowerCase().replaceAll(' ','-'),name,muscle})));
+export const muscleGroups=Object.freeze([...Object.keys(library),'Other']);
+const builtInExerciseIds=new Set(exercises.map(exercise=>exercise.id));
+export const isCustomExercise=exercise=>Boolean(exercise&&typeof exercise.id==='string'&&exercise.id.length&&!builtInExerciseIds.has(exercise.id));
+export function updateCustomExercise(state,id,changes){
+ const exercise=state.exercises.find(exercise=>exercise.id===id);
+ if(!exercise)throw Error('This exercise could not be found.');
+ if(!isCustomExercise(exercise))throw Error('Built-in exercises cannot be edited.');
+ const name=typeof changes?.name==='string'?changes.name.trim():'';
+ if(!name)throw Error('Give the exercise a name.');
+ if(name.length>120)throw Error('Keep the exercise name to 120 characters or fewer.');
+ if(state.exercises.some(other=>other.id!==id&&other.name.toLowerCase()===name.toLowerCase()))throw Error('An exercise with that name already exists. Choose a different name.');
+ const muscle=changes?.muscle,existingGroup=typeof exercise.muscle==='string'&&exercise.muscle.trim()&&exercise.muscle.length<=50&&muscle===exercise.muscle;
+ if(!muscleGroups.includes(muscle)&&!existingGroup)throw Error('Choose a valid muscle group.');
+ // Keep the ID so routines, active sets and all historical records stay linked.
+ return {...state,exercises:state.exercises.map(other=>other.id===id?{...other,name,muscle}:other)};
+}
 export const newSet=(weight=null,reps=null,type='normal')=>({id:uid(),weight,reps,type,done:false});
 export function initialState(){return {version:2,exercises:structuredClone(exercises),workouts:[],draft:null,routines:[{id:uid(),name:'Upper body',items:['bench-press','barbell-row','shoulder-press','lat-pulldown','triceps-pushdown'].map(exerciseId=>({exerciseId,group:null,sets:[{weight:null,reps:null,type:'normal'},{weight:null,reps:null,type:'normal'},{weight:null,reps:null,type:'normal'}]}))},{id:uid(),name:'Lower body',items:['back-squat','romanian-deadlift','leg-curl','calf-raise'].map(exerciseId=>({exerciseId,group:null,sets:Array.from({length:3},()=>({weight:null,reps:null,type:'normal'}))}))},{id:uid(),name:'Full body',items:['back-squat','bench-press','lat-pulldown','lateral-raise'].map(exerciseId=>({exerciseId,group:null,sets:Array.from({length:3},()=>({weight:null,reps:null,type:'normal'}))}))}],settings:{unit:'kg',rest:90,restEnds:null,lastBackup:null,appearance:'dark',accent:'lime',font:'space',setupComplete:false,schedule:[],scheduleHistory:[],trackingSince:localDay()}}}
 export const localDay=(v=new Date())=>{const d=new Date(v);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};

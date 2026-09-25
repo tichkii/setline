@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {initialState,startWorkout,newSet,finishWorkout,validateBackup,volume,bestFor,toDisplay,toKg,activityDays,localDay,csvExport,normalizeGroups,routineEditorFor,routineFromEditor,parseWeightInput,formatElapsed} from './dist/core.mjs';
+import {initialState,startWorkout,newSet,finishWorkout,validateBackup,volume,bestFor,toDisplay,toKg,activityDays,localDay,csvExport,normalizeGroups,routineEditorFor,routineFromEditor,parseWeightInput,formatElapsed,exercises,muscleGroups,isCustomExercise,updateCustomExercise,previousEntries} from './dist/core.mjs';
 function fixture(){const s=initialState();s.settings.schedule=[];s.settings.scheduleHistory=[];s.settings.trackingSince='2026-09-01';const w=startWorkout(s);w.started='2026-09-21T10:00:00Z';w.entries=[{id:'entry',exerciseId:'bench-press',group:null,sets:[{...newSet(100,5),done:true},{...newSet(40,10,'warmup'),done:true},{...newSet(60,10,'drop'),done:true}]}];w.entries[0].sets.splice(1,1);s.workouts=[finishWorkout(w,'2026-09-21T11:00:00Z')];return s}
 test('JSON round trip preserves complete state',()=>{const s=fixture();s.draft=startWorkout(s,s.routines[0]);assert.deepEqual(validateBackup(JSON.parse(JSON.stringify(s))),s)});
 test('orphan completed drop remains loadable after finish',()=>{const s=initialState(),w=startWorkout(s);w.entries=[{id:'entry',exerciseId:'bench-press',group:null,sets:[newSet(100,5),{...newSet(60,10,'drop'),done:true}]}];s.workouts=[finishWorkout(w)];assert.equal(s.workouts[0].entries[0].sets[0].type,'normal');assert.doesNotThrow(()=>validateBackup(s))});
@@ -27,3 +27,74 @@ test('duplicate routine exercises receive independent temporary IDs and kg stays
 test('routine save rejects empty names, no exercises, and empty set templates',()=>{const editor=routineEditorFor();assert.throws(()=>routineFromEditor(editor));editor.name='My routine';assert.throws(()=>routineFromEditor(editor));editor.entries=[{id:'e',exerciseId:'bench-press',group:null,sets:[]}];assert.throws(()=>routineFromEditor(editor))});
 test('routine editing keeps superset/drop structure in backup and repeated workout',()=>{const s=fixture(),editor=routineEditorFor(s.routines[0]);editor.entries[0].group=editor.entries[1].group='superset';editor.entries[0].sets=[newSet(60,8),newSet(40,10,'drop')];s.routines[0]=routineFromEditor(editor);const imported=validateBackup(s),draft=startWorkout(imported,imported.routines[0]);assert.equal(draft.entries[0].group,draft.entries[1].group);assert.equal(draft.entries[0].sets[1].type,'drop');assert.equal(draft.rating,null)});
 test('legacy schedule gains historical baseline before future schedule changes',()=>{const s=fixture();s.settings.schedule=[1];delete s.settings.scheduleHistory;const migrated=validateBackup(s);migrated.settings.schedule=[4];migrated.settings.scheduleHistory.push({from:'2026-09-23',days:[4]});const days=activityDays(migrated,112,new Date('2026-09-24T12:00:00'));assert.equal(days.find(d=>d.date==='2026-09-14').status,'missed');assert.equal(days.find(d=>d.date==='2026-09-24').status,'planned')});
+
+function customExerciseFixture(){
+ const state=fixture(),exercise={id:'legacy-hip-abductor',name:'Hip abductor',muscle:'Chest'};
+ state.exercises.push(exercise);
+ state.workouts[0].entries[0].exerciseId=exercise.id;
+ state.routines.push({id:'custom-routine',name:'Hip strength',items:[{exerciseId:exercise.id,group:null,sets:[{weight:37.5,reps:12,type:'normal'},{weight:25,reps:15,type:'drop'}]}]});
+ state.draft=startWorkout(state,state.routines.at(-1));
+ state.draft.entries[0].sets[0].done=true;
+ return state;
+}
+test('editing a custom exercise preserves routine, active and completed workout links and values',()=>{
+ const state=customExerciseFixture(),id=state.exercises.at(-1).id,before=structuredClone(state);
+ const records=bestFor(state.workouts,id),history=previousEntries(state.workouts,id),total=volume(state.workouts[0]);
+ const edited=updateCustomExercise(state,id,{name:'  Seated hip abductor  ',muscle:'Legs'});
+ assert.notEqual(edited,state);assert.notEqual(edited.exercises,state.exercises);
+ assert.deepEqual(state,before);
+ assert.deepEqual(edited.exercises.at(-1),{id,name:'Seated hip abductor',muscle:'Legs'});
+ for(const key of ['workouts','draft','routines','settings'])assert.equal(edited[key],state[key]);
+ assert.deepEqual(bestFor(edited.workouts,id),records);
+ assert.deepEqual(previousEntries(edited.workouts,id),history);
+ assert.equal(volume(edited.workouts[0]),total);
+ assert.deepEqual(validateBackup(JSON.parse(JSON.stringify(edited))),edited);
+ assert.match(csvExport(edited),/"Seated hip abductor","Legs"/);
+});
+test('legacy and imported UUID custom exercises remain editable without a custom marker',()=>{
+ const legacy=customExerciseFixture();legacy.version=1;
+ const restored=validateBackup(JSON.parse(JSON.stringify(legacy))),legacyId=restored.exercises.at(-1).id;
+ assert.ok(isCustomExercise(restored.exercises.at(-1)));
+ assert.equal(updateCustomExercise(restored,legacyId,{name:'Hip abductor',muscle:'Legs'}).exercises.at(-1).muscle,'Legs');
+ const imported={id:'32f15a67-cee6-4b33-a186-e82752dc319e',name:'Imported cable movement',muscle:'Other'};
+ restored.exercises.push(imported);
+ assert.ok(isCustomExercise(imported));
+ const edited=updateCustomExercise(restored,imported.id,{name:'Imported cable movement',muscle:'Back'});
+ assert.equal(validateBackup(JSON.parse(JSON.stringify(edited))).exercises.at(-1).muscle,'Back');
+});
+test('every built-in exercise remains protected by canonical ID even if its imported label differs',()=>{
+ const state=initialState(),before=structuredClone(state);
+ for(const exercise of exercises){
+  assert.equal(isCustomExercise(exercise),false);
+  assert.throws(()=>updateCustomExercise(state,exercise.id,{name:'Different label',muscle:'Other'}),/Built-in/);
+ }
+ assert.deepEqual(state,before);
+ state.exercises[0]={...state.exercises[0],name:'Renamed in an older backup',muscle:'Other'};
+ assert.equal(isCustomExercise(state.exercises[0]),false);
+ assert.throws(()=>updateCustomExercise(state,state.exercises[0].id,{name:'Still protected',muscle:'Chest'}),/Built-in/);
+ for(const value of [null,undefined,{}, {id:''}, {id:17}])assert.equal(isCustomExercise(value),false);
+});
+test('renaming an imported exercise can preserve its existing nonstandard muscle group',()=>{
+ const state=customExerciseFixture();state.exercises.at(-1).muscle='Glutes';
+ const restored=validateBackup(JSON.parse(JSON.stringify(state))),id=restored.exercises.at(-1).id;
+ const edited=updateCustomExercise(restored,id,{name:'Seated hip abductor',muscle:'Glutes'});
+ assert.equal(edited.exercises.at(-1).muscle,'Glutes');
+ assert.equal(edited.exercises.at(-1).name,'Seated hip abductor');
+ assert.deepEqual(validateBackup(JSON.parse(JSON.stringify(edited))),edited);
+ assert.equal(updateCustomExercise(restored,id,{name:'Hip abductor',muscle:'Legs'}).exercises.at(-1).muscle,'Legs');
+ assert.throws(()=>updateCustomExercise(restored,id,{name:'Hip abductor',muscle:'New custom category'}),/valid muscle group/);
+ assert.equal(restored.exercises.at(-1).muscle,'Glutes');
+});
+test('custom exercise edits reject invalid fields and duplicate names without changing state',()=>{
+ const state=customExerciseFixture(),id=state.exercises.at(-1).id,before=structuredClone(state);
+ for(const changes of [null,{}, {name:'   ',muscle:'Legs'}, {name:12,muscle:'Legs'}, {name:'x'.repeat(121),muscle:'Legs'}, {name:'bench PRESS',muscle:'Legs'}, {name:'Hip abductor',muscle:'Invalid'}, {name:'Hip abductor',muscle:null}]){
+  assert.throws(()=>updateCustomExercise(state,id,changes));
+  assert.deepEqual(state,before);
+ }
+ assert.throws(()=>updateCustomExercise(state,'missing-exercise',{name:'Missing',muscle:'Legs'}),/could not be found/);
+ assert.deepEqual(state,before);
+ const edited=updateCustomExercise(state,id,{name:'HIP ABDUCTOR',muscle:'Legs'});
+ assert.equal(edited.exercises.at(-1).name,'HIP ABDUCTOR');
+ assert.equal(updateCustomExercise(state,id,{name:'x'.repeat(120),muscle:'Legs'}).exercises.at(-1).name.length,120);
+ for(const muscle of muscleGroups)assert.equal(updateCustomExercise(state,id,{name:'Hip abductor',muscle}).exercises.at(-1).muscle,muscle);
+});
