@@ -1,6 +1,6 @@
 # Verification
 
-Checked on 24 September 2026, including the version 2.2 in-app update flow.
+Checked through 25 September 2026, including version 2.3 sharing and navigation changes.
 
 ## Automated checks
 
@@ -13,6 +13,16 @@ Additional coverage: version 1 migration with active draft preservation, setup a
 Version 2.1 adds decimal-dot/comma parsing, fractional kg/lb round trips, elapsed-time hour boundaries and resumed sessions; routine bundle privacy, validation, ID collisions, additive imports and size/count limits; and offline cache completeness, failed-install retention, cache isolation, navigation fallback, missing-script errors, readiness timeouts and waiting-worker handling.
 
 Version 2.2 covers reload-mode precaching; explicit activation only after cache completeness; deterministic versioning including worker changes; awaiting a successful save before activation; first-install handling; another-tab activation; downloaded updates while offline; install/check/activation deadlines and retries; and throttled foreground/reconnect checks.
+
+## Version 2.3 browser checks
+
+- Used the in-app update flow on an isolated localhost origin to load the revised interface at 390 × 844.
+- Routine cards expose Edit and Start, without a separate Share button on every card. Share routines opens unchecked native checkboxes; Continue is disabled until a selection is made.
+- Selected Upper body and Full body. The generated import code included exactly those two routines. Change selection retained the checks; Select all included all three; Clear selection disabled Continue. Lower body alone produced a one-routine share.
+- Inspected the checkbox sheet at 390 × 844 and 320 × 740 and simplified sharing options visually. Workout and stats cards show one primary share action; save/copy/text options are inside More options.
+- Completed a 22.75 kg × 8 test set. Its workout card and text summary both preserved 182 kg volume. Stats and workout images generated successfully.
+- Measured the navigation bar at top 775, bottom 844, height 69 on Workout, empty History, Progress, Settings, and populated History. No application console errors.
+- The reported iPhone-only shift could not be reproduced on the desktop browser. Navigation now remains mounted across renders, has stable sizing, and short pages fill the viewport; confirmation on the user's iPhone is still needed.
 
 ## Version 2.2 browser checks
 

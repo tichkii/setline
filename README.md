@@ -66,7 +66,7 @@ Open the hosted link in Safari, choose Share → Add to Home Screen, keep Open a
 
 ## Sharing and offline use
 
-Use Share workout in a saved session, Share stats in Progress, or Share routine / Share all routines on the workout screen. PNG cards are rendered locally with Canvas and bundled fonts, without a server, screenshot library, or network request. Notes are excluded from shared summaries. Native file sharing is feature-detected; Save image, text sharing, copying, and a selectable text fallback remain available. iPhone native share-sheet behavior still needs physical-device verification.
+Use Share workout in a saved session, Share stats in Progress, or Share routines on the workout screen. Routine sharing opens a checkbox selector for one, several, or all routines; Change selection keeps the current choices. Share dialogs present one primary action, with file and text alternatives under More options. PNG cards are rendered locally with Canvas and bundled fonts, without a server, screenshot library, or network request. Notes are excluded from shared summaries. Native file sharing is feature-detected; Save image, text sharing, copying, and a selectable text fallback remain available. iPhone native share-sheet behavior still needs physical-device verification.
 
 Routine sharing exports only selected routine templates and their exercises. Import accepts the JSON download, the plain-text shared file, or pasted code. It previews names before adding, validates a 5 MB versioned package, keeps kg canonical, and generates fresh IDs. Duplicate imports intentionally add another copy rather than replace existing routines. This is separate from full-backup restore.
 
