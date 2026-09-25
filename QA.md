@@ -1,10 +1,10 @@
 # Verification
 
-Checked through 25 September 2026, including version 2.3 sharing and navigation changes.
+Checked through 25 September 2026, including version 2.4 custom exercise editing.
 
 ## Automated checks
 
-`node --test`: all 63 tests passed.
+`node --test`: all 68 tests passed.
 
 Coverage includes full JSON round trips; surviving drop sets when their parent is unchecked; warmup/drop-set volume and PR rules; canonical kg preservation across unit changes; invalid backup rejection; bodyweight sets; superset cleanup; duration-based calendar shades; historical training schedules; CSV escaping; and recalculation after deleting a workout.
 
@@ -13,6 +13,14 @@ Additional coverage: version 1 migration with active draft preservation, setup a
 Version 2.1 adds decimal-dot/comma parsing, fractional kg/lb round trips, elapsed-time hour boundaries and resumed sessions; routine bundle privacy, validation, ID collisions, additive imports and size/count limits; and offline cache completeness, failed-install retention, cache isolation, navigation fallback, missing-script errors, readiness timeouts and waiting-worker handling.
 
 Version 2.2 covers reload-mode precaching; explicit activation only after cache completeness; deterministic versioning including worker changes; awaiting a successful save before activation; first-install handling; another-tab activation; downloaded updates while offline; install/check/activation deadlines and retries; and throttled foreground/reconnect checks.
+
+## Version 2.4 checks
+
+- Added coverage for custom exercise edits preserving IDs, active and completed sets, routine targets, personal records, CSV data, and backup round trips.
+- Verified legacy custom exercises and imported custom IDs remain editable without a migration. Imported nonstandard muscle groups can remain unchanged when renaming.
+- Verified every built-in exercise ID remains protected and invalid, unknown, or duplicate edits leave the original state unchanged.
+- Reviewed the editor's save failure rollback and disabled controls during saving, and its return paths to the exercise picker, exercise menu, and Settings manager.
+- The browser-control connection exposed no available browser during this release, so the new editor has not had an interactive visual check. Physical iPhone verification remains outstanding.
 
 ## Version 2.3 browser checks
 

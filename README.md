@@ -9,6 +9,7 @@ A phone-first, offline-capable workout tracker. No account, subscriptions, or ho
 - Light/dark appearance, four accent colors, and bundled Space Grotesk/Manrope fonts that work offline.
 - A dedicated routine editor: create, rename, reorder, set targets, and link supersets without starting a workout. Edits do not alter active or completed workouts.
 - Exercise browsing grouped by muscle, custom exercises, and muscle filters for routines and workout history.
+- Edit a custom exercise's name or muscle group from its exercise menu, the exercise picker, or Settings > Manage custom exercises. Existing sets, routines, history, and records keep the same exercise ID; built-in exercises stay fixed.
 - Optional 1–5 workout ratings at completion, editable later in history and included in backups and CSV.
 - Autosaved active session, live m:ss / h:mm:ss elapsed time, rest countdown, notes, workout history, and quick exercise history.
 - Decimal weights accept a dot or comma, including quarter-weight plates.
