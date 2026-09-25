@@ -39,10 +39,10 @@ export function createSharing({getState,openModal,toast,importBundle}){
     };
     return {copy,send};
   }
-  const textArea=label=>`<details class="share-text-details"><summary>${label}</summary><textarea id="share-text" readonly rows="8" aria-label="${label}"></textarea></details><div class="share-actions"><button class="secondary" id="send-text">Share text</button><button class="secondary" id="copy-share">Copy text</button></div>`;
+  const textArea=(label,extra='')=>`<details class="share-text-details"><summary>More options</summary>${extra}<p class="help">${label}</p><textarea id="share-text" readonly rows="6" aria-label="${label}"></textarea><div class="share-actions"><button class="secondary" id="send-text">Share text</button><button class="secondary" id="copy-share">Copy text</button></div></details>`;
   async function card(model,text,name){
     const token=begin();
-    openModal(model.kind==='workout'?'Share workout':'Share your progress',`<p class="help">Made on your device, even offline. Save now and send later if you have no connection. Session notes are not included.</p><div id="share-preview" class="share-preview" role="status">Creating your card…</div><div class="share-actions"><button class="primary" id="send-card" disabled>Share image</button><button class="secondary" id="save-card" disabled>Save image</button></div><p class="help" id="share-file-help"></p>${textArea(model.kind==='stats'?'Progress summary':'Workout summary')}`);
+    openModal(model.kind==='workout'?'Share workout':'Share your progress',`<p class="help">Your session notes stay private. Save the card to share later, even offline.</p><div id="share-preview" class="share-preview" role="status">Creating your card…</div><div class="card-primary-action"><button class="primary" id="send-card" disabled>Share image</button></div><p class="help" id="share-file-help"></p>${textArea(model.kind==='stats'?'Progress summary':'Workout summary','<button class="secondary" id="save-card" disabled>Save image</button>')}`);
     textControls(text,token);
     const target=modal.querySelector('#share-preview'),send=modal.querySelector('#send-card'),save=modal.querySelector('#save-card'),help=modal.querySelector('#share-file-help');
     const active=()=>current(token,target);
@@ -53,14 +53,16 @@ export function createSharing({getState,openModal,toast,importBundle}){
       const img=document.createElement('img');img.src=previewUrl;img.alt=`${model.title}. ${model.metrics.map(m=>m.value+' '+m.label).join('. ')}`;
       target.replaceChildren(img);target.removeAttribute('role');
       const file=makeFile([blob],name,'image/png'),canShare=shareable(file);
-      send.disabled=!canShare;
+      send.disabled=!canShare;send.hidden=!canShare;
       save.disabled=false;
+      if(!canShare){save.className='primary';modal.querySelector('.card-primary-action').append(save)}
       save.onclick=()=>{if(!active())return;saveFile(blob,name);toast('Image download started. Keep it in Files or Photos.')};
       help.textContent=`PNG · ${Math.ceil(blob.size/1024)} KB. ${canShare?'Choose an app or save to your device.':'Use Save image, or touch and hold the preview to save it.'}`;
       send.onclick=async()=>{if(!active()||!canShare)return;try{await navigator.share({files:[file],title:model.title})}catch(e){if(active()&&e.name!=='AbortError')toast('Could not open sharing. Save the image or copy the summary instead.')}};
     }catch{
       if(!active())return;
-      target.textContent='The image could not be created on this browser. You can still share or copy the full summary below.';
+      target.textContent='The image could not be created. Share or copy the summary below.';
+      send.hidden=true;save.hidden=true;modal.querySelector('.share-text-details').open=true;
     }
   }
   function workout(id){
@@ -80,15 +82,28 @@ export function createSharing({getState,openModal,toast,importBundle}){
     const text=[`My training · ${subtitle}`,`${ws.length} sessions across ${days} training days`,`${minutes} minutes · ${sets} working sets`,`${num(toDisplay(total,unit))} ${unit} total volume`,...rows.map(r=>`${r.label}: ${r.value}`),'Logged with Setline'].join('\n');
     return card({kind:'stats',title:'The work adds up.',subtitle,metrics:[{label:'sessions',value:String(ws.length)},{label:'minutes trained',value:String(minutes)},{label:'working sets',value:String(sets)},{label:`volume · ${unit}`,value:num(toDisplay(total,unit))}],rows:rows.slice(0,6),accent:colors[state.settings.accent],footer:`${days} training days${rows.length>6?` · +${rows.length-6} more muscle groups`:''}`},text,'setline-progress-'+localDay()+'.png');
   }
-  function routines(ids){
+  function routines(ids=[]){
+    const state=getState(),selected=new Set(ids),token=begin();
+    openModal('Share routines',`<p class="help">Choose what to send. Only routine templates and exercise targets are shared.</p><div class="selection-toolbar"><p id="selection-count" role="status">0 selected</p><button class="text-link" id="select-all-routines">Select all</button></div><fieldset class="routine-selection"><legend>Your routines</legend>${state.routines.map(r=>`<label><input type="checkbox" value="${esc(r.id)}" ${selected.has(r.id)?'checked':''} aria-label="${esc(r.name)}"><span><strong>${esc(r.name)}</strong><small>${r.items.length} exercises · ${r.items.reduce((n,item)=>n+item.sets.length,0)} sets</small></span></label>`).join('')||'<p class="help">Create a routine to share it.</p>'}</fieldset><div class="selection-footer"><button class="primary wide" id="continue-sharing" disabled>Continue</button></div>`);
+    const list=modal.querySelector('.routine-selection'),all=modal.querySelector('#select-all-routines'),next=modal.querySelector('#continue-sharing'),count=modal.querySelector('#selection-count');
+    const active=()=>current(token,list),chosen=()=>[...list.querySelectorAll('input:checked')].map(input=>input.value);
+    function update(){const n=chosen().length;count.textContent=`${n} of ${state.routines.length} selected`;next.disabled=n===0;next.textContent=n?`Continue with ${n} ${n===1?'routine':'routines'}`:'Continue';all.textContent=n===state.routines.length&&n?'Clear selection':'Select all';all.disabled=!state.routines.length}
+    list.onchange=update;
+    all.onclick=()=>{if(!active())return;const check=chosen().length!==state.routines.length;for(const input of list.querySelectorAll('input'))input.checked=check;update()};
+    next.onclick=()=>{if(active()&&chosen().length)routineFiles(chosen())};
+    update();
+  }
+  function routineFiles(ids){
     const state=getState(),bundle=createRoutineBundle(state,ids),json=JSON.stringify(bundle),count=bundle.routines.length,token=begin();
     const name=count===1?filename(bundle.routines[0].name):'setline-routines';
     const blob=new Blob([json],{type:'application/json'}),file=makeFile([json],name+'.setline.txt','text/plain'),canShare=shareable(file);
-    openModal(count===1?'Share routine':'Share all routines',`<p class="help">${count} ${count===1?'routine':'routines'} · ${Math.ceil(blob.size/1024)} KB. Includes exercise names, targets, supersets and drop sets. Your workout history and notes stay private.</p><ul class="share-routine-list">${bundle.routines.map(r=>`<li>${esc(r.name)} <span>${r.items.length} exercises</span></li>`).join('')}</ul><div class="share-actions"><button class="primary" id="send-routines" ${shareable(file)?'':'disabled'}>Share routine file</button><button class="secondary" id="save-routines">Save routine file</button></div><p class="help">Your friend can save the file, open Setline → Import routines, and choose it. It adds routines alongside their own. Files and import work offline; sending depends on the app you choose.</p>${textArea('Routine import code')}`);
+    openModal(count===1?'Share routine':`Share ${count} routines`,`<p class="help">${count} ${count===1?'routine':'routines'} · ${Math.ceil(blob.size/1024)} KB. Workout history and notes stay private.</p><ul class="share-routine-list">${bundle.routines.map(r=>`<li>${esc(r.name)} <span>${r.items.length} exercises</span></li>`).join('')}</ul><button class="text-link" id="change-selection">Change selection</button><div class="card-primary-action"><button class="primary" id="send-routines" ${canShare?'':'hidden'}>Share ${count===1?'routine':'routines'}</button></div><p class="help">Your friend can add this file in Setline’s Import routines screen.</p>${textArea('Routine import code','<button class="secondary" id="save-routines">Save file</button>')}`);
     const {copy,send}=textControls(json,token);send.textContent='Share import code';copy.textContent='Copy import code';
     const save=modal.querySelector('#save-routines'),sendFile=modal.querySelector('#send-routines'),active=()=>current(token,save);
+    if(!canShare){save.className='primary';modal.querySelector('.card-primary-action').append(save)}
+    modal.querySelector('#change-selection').onclick=()=>{if(active())routines(ids)};
     save.onclick=()=>{if(!active())return;saveFile(blob,name+'.setline.json');toast('Routine file download started')};
-    sendFile.onclick=async()=>{if(!active()||!canShare)return;try{await navigator.share({files:[file],title:count===1?bundle.routines[0].name:'Setline routines'})}catch(e){if(active()&&e.name!=='AbortError')toast('Save the routine file or copy its import code instead.')}};
+    sendFile.onclick=async()=>{if(!active()||!canShare)return;try{await navigator.share({files:[file],title:count===1?bundle.routines[0].name:'Setline routines'})}catch(e){if(active()&&e.name!=='AbortError'){modal.querySelector('.share-text-details').open=true;toast('Save the routine file or copy its import code instead.')}}};
   }
   function importRoutines(){
     if(importing){toast('Finishing the current import. Try again in a moment.');return}
