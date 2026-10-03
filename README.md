@@ -13,6 +13,7 @@ A phone-first, offline-capable workout tracker. No account, subscriptions, or ho
 - Optional 1–5 workout ratings at completion, editable later in history and included in backups and CSV.
 - Autosaved active session, live m:ss / h:mm:ss elapsed time, rest countdown, notes, workout history, and quick exercise history.
 - Decimal weights accept a dot or comma, including quarter-weight plates.
+- Optional weight suggestions inside each exercise block use recent working sets to suggest a starting load for 8–10 reps. Tap to apply to unfinished normal sets, or turn suggestions off in Settings.
 - Share workouts and selected-period statistics as lightweight PNG cards generated on the device, with share-text/copy/save fallbacks.
 - Share one or all routines as portable files, or copy/paste routine import codes. Imports add routines without replacing existing history, settings, or an active workout.
 - Verified offline readiness, cached fonts and sharing tools, and a loading recovery screen for interrupted connections.
@@ -71,9 +72,17 @@ Use Share workout in a saved session, Share stats in Progress, or Share routines
 
 Routine sharing exports only selected routine templates and their exercises. Import accepts the JSON download, the plain-text shared file, or pasted code. It previews names before adding, validates a 5 MB versioned package, keeps kg canonical, and generates fresh IDs. Duplicate imports intentionally add another copy rather than replace existing routines. This is separate from full-backup restore.
 
+Workout and progress sharing offer a separate optional message under More options. Copy text and Share text combine that message with the original generated statistics; the recorded stats cannot be edited in the sharing dialog. Image cards continue to use the workout log and do not include the message. Routine import codes stay read-only. Share text fields use a 16 px font to avoid small-input focus zoom on iPhone while leaving page zoom available.
+
 In Settings, Prepare offline access verifies that the complete app is cached. Connect once to prepare it before leaving coverage. Workouts, history, timers, image generation, and routine import then work locally. Save images/files to send later when a sharing destination needs connectivity. The first-ever visit still requires a connection; clearing browser storage removes the offline cache and local log.
 
 ## Data and calculation rules
+
+Weight suggestions are an on-device heuristic, not a prediction of achievable reps. They use the latest completed session for that exercise within 42 days, its heaviest working load, and the lowest reps at that load. All recorded normal working sets must exceed 10 reps before an increase is suggested; mixed results hold the load. Low-rep results can suggest a reduction. Warmups, drop sets, unfinished sets, zero-load work, recognized assisted/bodyweight exercises, and sessions with working sets above 20 reps do not provide a basis for an increase. Unsupported or stale evidence produces no suggestion.
+
+The estimate uses `load × (30 + reps) / (30 + 9)`, limits either change to 10%, and rounds conservatively to 2.5 kg or 5 lb increments. Those increments are defaults, not equipment detection; users choose an available weight they can control. Applying a suggestion changes only unfinished normal-set weights and preserves actual rep inputs, completed sets, warmups, drops, routine templates, and past records. The preference persists in backups; older backups default to suggestions enabled.
+
+This product rule is intentionally distinct from a prescribed training program. [ACSM's 2026 review](https://pmc.ncbi.nlm.nih.gov/articles/PMC12965823/) supports progression tailored to the person and task; the exact algorithm and rounding here are engineering choices, not a validated ACSM calculator. The 10% ceiling is informed by the range discussed in the [earlier progression position stand](https://pubmed.ncbi.nlm.nih.gov/19204579/), without claiming the app implements that full protocol or can infer effort from repetitions alone.
 
 All workout data is stored on the device using IndexedDB. Writes use a revision check within the same transaction to prevent two tabs silently replacing each other's changes. A conflicting tab shows an instruction to export and reload. Workouts and backups are never sent to an application server. The hosting provider still serves app assets and may retain ordinary request logs.
 

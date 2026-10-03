@@ -23,26 +23,29 @@ export function createSharing({getState,openModal,toast,importBundle}){
   // A close event is queued: an earlier dialog may already have reopened by delivery.
   modal.addEventListener('close',()=>{if(!modal.open){generation++;cleanup()}});
   function textControls(text,token){
-    const textarea=modal.querySelector('#share-text'),copy=modal.querySelector('#copy-share'),send=modal.querySelector('#send-text');
+    const textarea=modal.querySelector('#share-text'),caption=modal.querySelector('#share-caption'),manualText=modal.querySelector('#share-copy-text')||textarea,copy=modal.querySelector('#copy-share'),send=modal.querySelector('#send-text');
     const active=()=>current(token,textarea);
-    const manual=message=>{if(!active())return;textarea.closest('details').open=true;textarea.focus();textarea.select();textarea.setSelectionRange(0,textarea.value.length);toast(message)};
+    // Recorded stats and routine code always come from the generated source, never the DOM.
+    const outgoing=()=>{const message=caption?.value.slice(0,500).trim();return message?`${message}\n\n${text}`:text};
+    const manual=message=>{if(!active())return;textarea.closest('details').open=true;manualText.value=outgoing();if(caption)manualText.parentElement.hidden=false;manualText.focus();manualText.select();manualText.setSelectionRange(0,manualText.value.length);toast(message)};
     textarea.value=text;
+    if(caption)caption.oninput=()=>{if(active()&&!manualText.parentElement.hidden)manualText.value=outgoing()};
     copy.onclick=async()=>{
       if(!active())return;
-      try{await navigator.clipboard.writeText(textarea.value);if(active())toast('Copied. Paste it wherever you like.')}
+      try{await navigator.clipboard.writeText(outgoing());if(active())toast('Copied. Paste it wherever you like.')}
       catch{manual('Select and copy the text below.')}
     };
     send.onclick=async()=>{
       if(!active())return;
       if(!navigator.share){manual('Copy the text below, or save it for later.');return}
-      try{await navigator.share({title:'Setline',text:textarea.value})}catch(e){if(e.name!=='AbortError')manual('Sharing is unavailable. Copy the text below or save a file instead.')}
+      try{await navigator.share({title:'Setline',text:outgoing()})}catch(e){if(e.name!=='AbortError')manual('Sharing is unavailable. Copy the text below or save a file instead.')}
     };
     return {copy,send};
   }
-  const textArea=(label,extra='',readOnly=false)=>`<details class="share-text-details"><summary>More options</summary>${extra}<label for="share-text" class="help">${label}</label>${readOnly?'':'<p class="help" id="share-text-help">Customize your summary for Share text or Copy text.</p>'}<textarea id="share-text" ${readOnly?'readonly':'aria-describedby="share-text-help"'} rows="6"></textarea><div class="share-actions"><button class="secondary" id="send-text">Share text</button><button class="secondary" id="copy-share">Copy text</button></div></details>`;
+  const textArea=(label,extra='',routineCode=false)=>`<details class="share-text-details"><summary>More options</summary>${extra}${routineCode?'':'<label for="share-caption" class="help">Your message (optional)</label><p class="help" id="share-caption-help">Add a message to Share text or Copy text. Stats come from your log and cannot be edited here. The image does not include this message.</p><textarea id="share-caption" maxlength="500" rows="3" aria-describedby="share-caption-help"></textarea>'}<label for="share-text" class="help">${label}</label><textarea id="share-text" readonly rows="6"></textarea><div class="share-actions"><button class="secondary" id="send-text">Share text</button><button class="secondary" id="copy-share">Copy text</button></div>${routineCode?'':'<div hidden><label for="share-copy-text" class="help">Text to copy</label><textarea id="share-copy-text" readonly rows="6"></textarea></div>'}</details>`;
   async function card(model,text,name){
     const token=begin();
-    openModal(model.kind==='workout'?'Share workout':'Share your progress',`<p class="help">Your session notes stay private. Save the card to share later, even offline.</p><div id="share-preview" class="share-preview" role="status">Creating your card…</div><div class="card-primary-action"><button class="primary" id="send-card" disabled>Share image</button></div><p class="help" id="share-file-help"></p>${textArea(model.kind==='stats'?'Progress summary':'Workout summary','<button class="secondary" id="save-card" disabled>Save image</button>')}`);
+    openModal(model.kind==='workout'?'Share workout':'Share your progress',`<p class="help">Your session notes stay private. Save the card to share later, even offline.</p><div id="share-preview" class="share-preview" role="status">Creating your card…</div><div class="card-primary-action"><button class="primary" id="send-card" disabled>Share image</button></div><p class="help" id="share-file-help"></p>${textArea('Recorded stats','<button class="secondary" id="save-card" disabled>Save image</button>')}`);
     textControls(text,token);
     const target=modal.querySelector('#share-preview'),send=modal.querySelector('#send-card'),save=modal.querySelector('#save-card'),help=modal.querySelector('#share-file-help');
     const active=()=>current(token,target);

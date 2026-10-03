@@ -1,10 +1,10 @@
 # Verification
 
-Checked through 25 September 2026, including version 2.4 custom exercise editing.
+Checked through 3 October 2026, including version 2.5 weight suggestions and sharing fixes.
 
 ## Automated checks
 
-`node --test`: all 68 tests passed.
+`node --test`: all 81 tests passed.
 
 Coverage includes full JSON round trips; surviving drop sets when their parent is unchecked; warmup/drop-set volume and PR rules; canonical kg preservation across unit changes; invalid backup rejection; bodyweight sets; superset cleanup; duration-based calendar shades; historical training schedules; CSV escaping; and recalculation after deleting a workout.
 
@@ -13,6 +13,19 @@ Additional coverage: version 1 migration with active draft preservation, setup a
 Version 2.1 adds decimal-dot/comma parsing, fractional kg/lb round trips, elapsed-time hour boundaries and resumed sessions; routine bundle privacy, validation, ID collisions, additive imports and size/count limits; and offline cache completeness, failed-install retention, cache isolation, navigation fallback, missing-script errors, readiness timeouts and waiting-worker handling.
 
 Version 2.2 covers reload-mode precaching; explicit activation only after cache completeness; deterministic versioning including worker changes; awaiting a successful save before activation; first-install handling; another-tab activation; downloaded updates while offline; install/check/activation deadlines and retries; and throttled foreground/reconnect checks.
+
+## Version 2.5 checks
+
+- Twelve progression tests cover the 93 kg x 15 to 100 kg example, weakest-set and mixed-performance rules, conservative decreases, kg/lb rounding, the 10% bound, newest-session selection, stale/future/unusable history, unsupported assisted/bodyweight work, and preservation of completed/warmup/drop sets and repetition targets. A preference test covers disabled-state backup round trips, older-backup defaults, and invalid values.
+- At 390 x 844, logged three 93 kg x 15 working sets and saved the session. Repeating it showed Try 100 kg for 8–10 reps. After checking the first set, applying changed only the two unfinished weights to 100; the completed 93 kg x 15 and all rep fields stayed intact.
+- Editing a weight after applying immediately re-enabled the suggestion button. Invalid weight input also re-enabled it; applying corrected the weight and cleared only that weight error. The browser checks cover the stale-button issue found during review.
+- Turned suggestions off in Settings, reloaded, and confirmed the exercise block stayed hidden without changing weights. Turned the setting on and confirmed the suggestion returned.
+- Inspected dark and light themes at 390 x 844 and the narrow layout at 320 x 740. No horizontal overflow in the narrow exercise view; the suggestion uses static layout and existing tap/focus styling.
+- Progress sharing created an image and exposed a separate editable message. Cursor editing and Copy text worked; the copied text included the new message and the unchanged 4,185 kg recorded volume. Both text fields computed to 16 px, and the recorded summary remained read-only. Saving the image preserved the message.
+- Focused sharing behavior checks confirmed copied/shared stats come from the original generated text even if the displayed stats field is altered programmatically. Clipboard failure exposes a separate selected, read-only combined-text fallback without selecting the normal caption input.
+- Sharing Lower body alone still generated a read-only one-routine package with no caption field.
+- Stopped the preview server, reloaded from cache, reapplied a suggested weight, generated a progress image, and copied a new message with the locked stats while offline.
+- No application console errors during the online browser checks. Test data remained on a separate localhost origin. Physical iPhone focus zoom, native selection handles, and native share-sheet behavior were not tested.
 
 ## Version 2.4 checks
 
