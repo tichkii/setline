@@ -80,7 +80,7 @@ fieldset{min-width:0}
 .share-preview{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#111413;color:var(--muted);text-align:center;min-height:100px;display:grid;place-items:center}
 .share-preview img{display:block;width:100%;height:auto}
 .share-text-details{margin-top:22px}.share-text-details summary{cursor:pointer;min-height:44px;padding:12px 0;font-size:.875rem;color:var(--muted)}
-.share-text-details textarea{font-size:.875rem;line-height:1.6;margin-top:8px}
+.share-text-details textarea{font-size:16px;line-height:1.6;margin-top:8px}
 .share-routine-list{list-style:none;padding:0;margin:16px 0;max-height:240px;overflow:auto}
 .share-routine-list li{padding:12px 0;border-bottom:1px solid var(--line);font-weight:600;overflow-wrap:anywhere}
 .share-routine-list span{display:block;font-weight:400;color:var(--muted);font-size:.875rem;margin-top:5px}
@@ -105,3 +105,16 @@ html{min-height:100%}body{min-height:100vh;min-height:100dvh}
 .exercise-choice-row{display:flex;align-items:center;border-bottom:1px solid var(--line);gap:4px;padding-right:6px}.exercise-choice-row:last-child{border-bottom:0}.muscle-group .exercise-choice-row .choice{flex:1;min-width:0;border:0}.exercise-choice-row .choice span{overflow-wrap:anywhere}.edit-exercise-button{flex:none;color:var(--accent);font-size:.8rem;min-width:48px}
 dialog .custom-exercise-choice{display:flex;align-items:center;justify-content:space-between;gap:16px}.custom-exercise-choice strong{overflow-wrap:anywhere;font-weight:500}.custom-exercise-choice .edit-label{font-size:.8rem;color:var(--accent);flex:none}
 #exercise-edit-form>input,#exercise-edit-form>select{width:100%}#exercise-edit-form label{margin:20px 0 8px}#exercise-edit-error:empty{display:none}#exercise-edit-error{color:var(--danger)}
+.weight-suggestion{margin:14px 0 18px;padding:13px 14px;border-left:2px solid var(--accent);border-radius:0 9px 9px 0;background:var(--raised)}
+.weight-suggestion:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.suggestion-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.suggestion-label{display:block;font-size:.65rem;letter-spacing:.055em;color:var(--muted);line-height:1.5}
+.suggestion-row strong{display:block;font-size:1.1rem;font-weight:600;line-height:1.5;font-variant-numeric:tabular-nums}
+.suggestion-row button{font-size:.8rem;min-height:44px;padding:9px 12px;white-space:nowrap}
+.suggestion-explanation{margin-top:5px;color:var(--muted);font-size:.8rem;line-height:1.6}
+.suggestion-explanation summary{cursor:pointer;padding:8px 0;min-height:36px}
+.suggestion-explanation p{margin:8px 0 4px}
+
+.setting .suggestions-toggle{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;cursor:pointer}.suggestions-toggle input{appearance:auto;width:24px;height:24px;min-height:24px;padding:0;accent-color:var(--accent)}
+
+#routine-code{font-size:16px}

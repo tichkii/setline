@@ -29,17 +29,17 @@ export function createSharing({getState,openModal,toast,importBundle}){
     textarea.value=text;
     copy.onclick=async()=>{
       if(!active())return;
-      try{await navigator.clipboard.writeText(text);if(active())toast('Copied. Paste it wherever you like.')}
+      try{await navigator.clipboard.writeText(textarea.value);if(active())toast('Copied. Paste it wherever you like.')}
       catch{manual('Select and copy the text below.')}
     };
     send.onclick=async()=>{
       if(!active())return;
       if(!navigator.share){manual('Copy the text below, or save it for later.');return}
-      try{await navigator.share({title:'Setline',text})}catch(e){if(e.name!=='AbortError')manual('Sharing is unavailable. Copy the text below or save a file instead.')}
+      try{await navigator.share({title:'Setline',text:textarea.value})}catch(e){if(e.name!=='AbortError')manual('Sharing is unavailable. Copy the text below or save a file instead.')}
     };
     return {copy,send};
   }
-  const textArea=(label,extra='')=>`<details class="share-text-details"><summary>More options</summary>${extra}<p class="help">${label}</p><textarea id="share-text" readonly rows="6" aria-label="${label}"></textarea><div class="share-actions"><button class="secondary" id="send-text">Share text</button><button class="secondary" id="copy-share">Copy text</button></div></details>`;
+  const textArea=(label,extra='',readOnly=false)=>`<details class="share-text-details"><summary>More options</summary>${extra}<label for="share-text" class="help">${label}</label>${readOnly?'':'<p class="help" id="share-text-help">Customize your summary for Share text or Copy text.</p>'}<textarea id="share-text" ${readOnly?'readonly':'aria-describedby="share-text-help"'} rows="6"></textarea><div class="share-actions"><button class="secondary" id="send-text">Share text</button><button class="secondary" id="copy-share">Copy text</button></div></details>`;
   async function card(model,text,name){
     const token=begin();
     openModal(model.kind==='workout'?'Share workout':'Share your progress',`<p class="help">Your session notes stay private. Save the card to share later, even offline.</p><div id="share-preview" class="share-preview" role="status">Creating your card…</div><div class="card-primary-action"><button class="primary" id="send-card" disabled>Share image</button></div><p class="help" id="share-file-help"></p>${textArea(model.kind==='stats'?'Progress summary':'Workout summary','<button class="secondary" id="save-card" disabled>Save image</button>')}`);
@@ -97,7 +97,7 @@ export function createSharing({getState,openModal,toast,importBundle}){
     const state=getState(),bundle=createRoutineBundle(state,ids),json=JSON.stringify(bundle),count=bundle.routines.length,token=begin();
     const name=count===1?filename(bundle.routines[0].name):'setline-routines';
     const blob=new Blob([json],{type:'application/json'}),file=makeFile([json],name+'.setline.txt','text/plain'),canShare=shareable(file);
-    openModal(count===1?'Share routine':`Share ${count} routines`,`<p class="help">${count} ${count===1?'routine':'routines'} · ${Math.ceil(blob.size/1024)} KB. Workout history and notes stay private.</p><ul class="share-routine-list">${bundle.routines.map(r=>`<li>${esc(r.name)} <span>${r.items.length} exercises</span></li>`).join('')}</ul><button class="text-link" id="change-selection">Change selection</button><div class="card-primary-action"><button class="primary" id="send-routines" ${canShare?'':'hidden'}>Share ${count===1?'routine':'routines'}</button></div><p class="help">Your friend can add this file in Setline’s Import routines screen.</p>${textArea('Routine import code','<button class="secondary" id="save-routines">Save file</button>')}`);
+    openModal(count===1?'Share routine':`Share ${count} routines`,`<p class="help">${count} ${count===1?'routine':'routines'} · ${Math.ceil(blob.size/1024)} KB. Workout history and notes stay private.</p><ul class="share-routine-list">${bundle.routines.map(r=>`<li>${esc(r.name)} <span>${r.items.length} exercises</span></li>`).join('')}</ul><button class="text-link" id="change-selection">Change selection</button><div class="card-primary-action"><button class="primary" id="send-routines" ${canShare?'':'hidden'}>Share ${count===1?'routine':'routines'}</button></div><p class="help">Your friend can add this file in Setline’s Import routines screen.</p>${textArea('Routine import code','<button class="secondary" id="save-routines">Save file</button>',true)}`);
     const {copy,send}=textControls(json,token);send.textContent='Share import code';copy.textContent='Copy import code';
     const save=modal.querySelector('#save-routines'),sendFile=modal.querySelector('#send-routines'),active=()=>current(token,save);
     if(!canShare){save.className='primary';modal.querySelector('.card-primary-action').append(save)}

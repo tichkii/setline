@@ -2,6 +2,13 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {initialState,startWorkout,newSet,finishWorkout,validateBackup,volume,bestFor,toDisplay,toKg,activityDays,localDay,csvExport,normalizeGroups,routineEditorFor,routineFromEditor,parseWeightInput,formatElapsed,exercises,muscleGroups,isCustomExercise,updateCustomExercise,previousEntries} from './dist/core.mjs';
 function fixture(){const s=initialState();s.settings.schedule=[];s.settings.scheduleHistory=[];s.settings.trackingSince='2026-09-01';const w=startWorkout(s);w.started='2026-09-21T10:00:00Z';w.entries=[{id:'entry',exerciseId:'bench-press',group:null,sets:[{...newSet(100,5),done:true},{...newSet(40,10,'warmup'),done:true},{...newSet(60,10,'drop'),done:true}]}];w.entries[0].sets.splice(1,1);s.workouts=[finishWorkout(w,'2026-09-21T11:00:00Z')];return s}
 test('JSON round trip preserves complete state',()=>{const s=fixture();s.draft=startWorkout(s,s.routines[0]);assert.deepEqual(validateBackup(JSON.parse(JSON.stringify(s))),s)});
+test('weight suggestion preference survives backups and older backups default to enabled',()=>{
+ const s=fixture();s.settings.weightSuggestions=false;
+ assert.equal(validateBackup(JSON.parse(JSON.stringify(s))).settings.weightSuggestions,false);
+ delete s.settings.weightSuggestions;
+ assert.equal(validateBackup(s).settings.weightSuggestions,true);
+ s.settings.weightSuggestions='false';assert.throws(()=>validateBackup(s));
+});
 test('orphan completed drop remains loadable after finish',()=>{const s=initialState(),w=startWorkout(s);w.entries=[{id:'entry',exerciseId:'bench-press',group:null,sets:[newSet(100,5),{...newSet(60,10,'drop'),done:true}]}];s.workouts=[finishWorkout(w)];assert.equal(s.workouts[0].entries[0].sets[0].type,'normal');assert.doesNotThrow(()=>validateBackup(s))});
 test('warmup excluded and drop included in volume; drop excluded in PR',()=>{const s=fixture(),w=s.workouts[0];w.entries[0].sets.unshift({...newSet(200,3,'warmup'),done:true});assert.equal(volume(w),1100);assert.equal(bestFor(s.workouts,'bench-press').weight,100);assert.ok(Math.abs(bestFor(s.workouts,'bench-press').e1rm-116.6666666667)<1e-6)});
 test('unit display conversion never changes canonical kg',()=>{const s=fixture(),before=JSON.stringify(s.workouts);s.settings.unit='lb';assert.equal(toDisplay(100,'lb'),220.46);s.settings.unit='kg';assert.equal(JSON.stringify(s.workouts),before);assert.ok(Math.abs(toKg(220.462262185,'lb')-100)<1e-10)});

@@ -25,7 +25,7 @@ function workerHarness({hostname='setline.example',installFails=false,networkFai
 }
 test('worker caches every required asset and reports readiness only for its complete cache',async()=>{
  const h=workerHarness();await h.lifecycle('install');assert.equal(h.skipped,0);assert.equal((await h.status()).ready,true);assert.equal((await h.status()).cache,cacheName);
- for(const asset of ['boot.js','sharing.mjs','routine-sharing.mjs','share-card.mjs','offline.mjs','updates.mjs'])assert.ok(h.stores.get(cacheName).has(h.key(asset)),asset);
+ for(const asset of ['boot.js','sharing.mjs','routine-sharing.mjs','share-card.mjs','offline.mjs','updates.mjs','progression.mjs'])assert.ok(h.stores.get(cacheName).has(h.key(asset)),asset);
  h.stores.get(cacheName).delete(h.key('share-card.mjs'));assert.equal((await h.status()).ready,false);
 });
 test('installation bypasses stale HTTP cache for every asset without forcing activation, including on localhost',async()=>{
